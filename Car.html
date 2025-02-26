@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>車輛安排系統</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -23,16 +24,14 @@
       justify-content: center;
       gap: 20px;
       margin-bottom: 20px;
-      width: 80%;
-      max-width: 1200px;
     }
     .list {
       border: 2px solid #ccc;
       padding: 10px;
-      flex-grow: 1;
-      min-width: 300px;
-      min-height: 300px;
+      width: 100%;
+      min-height: 200px;
       background-color: #f9f9f9;
+      flex: 1;
     }
     .draggable {
       padding: 8px;
@@ -75,50 +74,15 @@
     <input type="text" id="nameInput" placeholder="輸入姓名">
     <button onclick="addName('male')">加入乾道</button>
     <button onclick="addName('female')">加入坤道</button>
+    <input type="file" id="fileInput" accept=".xlsx, .xls" onchange="importExcel(event)">
   </div>
 
   <div class="lists">
     <div class="list" id="maleList" ondragover="event.preventDefault()" ondrop="dropReturn(event, 'maleList')">
       <h4>乾道</h4>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="康倍銓">康倍銓</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="林子頎">林子頎</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="連哲蒝">連哲蒝</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="陳煌林">陳煌林</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="鄭詠霖">鄭詠霖</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="蕭泓政">蕭泓政</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="許家澄">許家澄</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="陳泓霖">陳泓霖</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="張詠勁">張詠勁</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="王茂丞">王茂丞</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="廖宜德">廖宜德</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="黃子修">黃子修</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="林政廷">林政廷</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="黃柏穎">黃柏穎</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="陳政榮">陳政榮</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="陳祐宸">陳祐宸</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="劉建佑">劉建佑</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="陳翔均">陳翔均</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="徐昇暉">徐昇暉</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="李明軒">李明軒</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="李捷綸">李捷倫</div>
-      <div class="draggable male" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'maleList')" onclick="removeOnTripleClick(event)" id="楊翊宏">楊翊宏</div>
     </div>
     <div class="list" id="femaleList" ondragover="event.preventDefault()" ondrop="dropReturn(event, 'femaleList')">
       <h4>坤道</h4>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="許姸雯">許姸雯</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="粘惠雯">粘惠雯</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="李宸儀">李宸儀</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="邱姮善">邱姮善</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="吳宜珈">吳宜珈</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="莊秝嫻">莊秝嫻</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="高艿芹">高艿芹</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="王曼禕">王曼禕</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="陳依萱">陳依萱</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="賴鈺祺">賴鈺祺</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="石容華">石容華</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="張姵慈">張姵慈</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="廖珮涵">廖珮涵</div>
-      <div class="draggable female" draggable="true" ondragstart="dragStart(event)" ondblclick="returnToList(event, 'femaleList')" onclick="removeOnTripleClick(event)" id="傅柔瑄">傅柔瑄</div>
     </div>
   </div>
 
@@ -133,22 +97,58 @@
 
   <script>
     const drivers = ["曾兄", "黃講師", "陳講師", "蘇講師", "莊講師", "黃講師"];
-    
-    function addName(gender) {
-      const nameInput = document.getElementById('nameInput');
-      const name = nameInput.value.trim();
-      if (!name) return;
+    let maleList = [];
+    let femaleList = [];
 
+    function addName(gender, name = null) {
+      const nameInput = document.getElementById('nameInput');
+      const nameValue = name || nameInput.value.trim();
+      if (!nameValue) return;
+
+      if (gender === 'male' && !maleList.includes(nameValue)) maleList.push(nameValue);
+      if (gender === 'female' && !femaleList.includes(nameValue)) femaleList.push(nameValue);
+
+      renderLists();
+      if (!name) nameInput.value = '';
+    }
+
+    function renderLists() {
+      const maleContainer = document.getElementById('maleList');
+      const femaleContainer = document.getElementById('femaleList');
+      maleContainer.innerHTML = '<h4>乾道</h4>';
+      femaleContainer.innerHTML = '<h4>坤道</h4>';
+
+      maleList.forEach(name => createNameElement(name, 'male', maleContainer));
+      femaleList.forEach(name => createNameElement(name, 'female', femaleContainer));
+    }
+
+    function createNameElement(name, gender, container) {
       const nameElement = document.createElement('div');
       nameElement.className = `draggable ${gender}`;
       nameElement.textContent = name;
       nameElement.draggable = true;
-      nameElement.id = `name-${Date.now()}`;
+      nameElement.id = `name-${gender}-${name}`;
       nameElement.ondragstart = dragStart;
       nameElement.ondblclick = () => returnToList({ target: nameElement }, gender === 'male' ? 'maleList' : 'femaleList');
       nameElement.onclick = removeOnTripleClick;
-      document.getElementById(gender === 'male' ? 'maleList' : 'femaleList').appendChild(nameElement);
-      nameInput.value = '';
+      if (!container.contains(nameElement)) container.appendChild(nameElement);
+    }
+
+    function importExcel(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+        if (rows.length > 0) maleList = rows[0].filter(name => name.trim() !== "");
+        if (rows.length > 1) femaleList = rows[1].filter(name => name.trim() !== "");
+
+        renderLists();
+      };
+      reader.readAsArrayBuffer(file);
     }
 
     function dragStart(event) {
@@ -159,7 +159,7 @@
       event.preventDefault();
       const id = event.dataTransfer.getData('text/plain');
       const element = document.getElementById(id);
-      if (element) {
+      if (element && event.target !== element.parentElement && !event.target.contains(element)) {
         event.target.innerHTML = '';
         event.target.appendChild(element);
       }
@@ -169,18 +169,25 @@
       event.preventDefault();
       const id = event.dataTransfer.getData('text/plain');
       const element = document.getElementById(id);
-      if (element) document.getElementById(listId).appendChild(element);
+      const targetList = document.getElementById(listId);
+      if (element && targetList !== element.parentElement && !targetList.contains(element)) {
+        targetList.appendChild(element);
+      }
     }
 
     function returnToList(event, listId) {
-      document.getElementById(listId).appendChild(event.target);
+      const targetList = document.getElementById(listId);
+      if (!targetList.contains(event.target)) targetList.appendChild(event.target);
     }
 
     function removeOnTripleClick(event) {
       event.target.dataset.clickCount = (event.target.dataset.clickCount || 0) + 1;
       setTimeout(() => event.target.dataset.clickCount = 0, 500);
       if (event.target.dataset.clickCount >= 3) {
-        event.target.remove();
+        const name = event.target.textContent;
+        if (event.target.classList.contains('male')) maleList = maleList.filter(n => n !== name);
+        if (event.target.classList.contains('female')) femaleList = femaleList.filter(n => n !== name);
+        renderLists();
       }
     }
 

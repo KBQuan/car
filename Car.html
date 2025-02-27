@@ -122,6 +122,44 @@
       femaleList.forEach(name => createNameElement(name, 'female', femaleContainer));
     }
 
+    // 統一點擊事件：使用 e.detail 判斷雙擊與三擊
+    function handleNameClick(e) {
+      const element = e.target;
+      // 雙擊：設定延時返回
+      if(e.detail === 2) {
+        element.doubleClickTimer = setTimeout(() => {
+          // 若當前元素不在列表中，且底層資料仍包含該姓名，再返回至對應列表
+          if (!element.parentElement.classList.contains('list')) {
+            const name = element.textContent;
+            if ((element.classList.contains('male') && maleList.includes(name)) ||
+                (element.classList.contains('female') && femaleList.includes(name))) {
+              const listId = element.classList.contains('male') ? 'maleList' : 'femaleList';
+              document.getElementById(listId).appendChild(element);
+            }
+          }
+          element.doubleClickTimer = null;
+        }, 250);
+      }
+      // 三擊：先清除延時，再從資料與畫面中移除
+      else if(e.detail === 3) {
+        if (element.doubleClickTimer) {
+          clearTimeout(element.doubleClickTimer);
+          element.doubleClickTimer = null;
+        }
+        const name = element.textContent;
+        if (element.classList.contains('male')) {
+          maleList = maleList.filter(n => n !== name);
+        } else if (element.classList.contains('female')) {
+          femaleList = femaleList.filter(n => n !== name);
+        }
+        if (element.parentElement) {
+          element.parentElement.removeChild(element);
+        }
+        renderLists();
+      }
+      // 單擊不作處理
+    }
+
     function createNameElement(name, gender, container) {
       const nameElement = document.createElement('div');
       nameElement.className = `draggable ${gender}`;
@@ -129,8 +167,7 @@
       nameElement.draggable = true;
       nameElement.id = `name-${gender}-${name}`;
       nameElement.ondragstart = dragStart;
-      nameElement.ondblclick = () => returnToList({ target: nameElement }, gender === 'male' ? 'maleList' : 'femaleList');
-      nameElement.onclick = removeOnTripleClick;
+      nameElement.addEventListener('click', handleNameClick);
       if (!container.contains(nameElement)) container.appendChild(nameElement);
     }
 
@@ -172,22 +209,6 @@
       const targetList = document.getElementById(listId);
       if (element && targetList !== element.parentElement && !targetList.contains(element)) {
         targetList.appendChild(element);
-      }
-    }
-
-    function returnToList(event, listId) {
-      const targetList = document.getElementById(listId);
-      if (!targetList.contains(event.target)) targetList.appendChild(event.target);
-    }
-
-    function removeOnTripleClick(event) {
-      event.target.dataset.clickCount = (event.target.dataset.clickCount || 0) + 1;
-      setTimeout(() => event.target.dataset.clickCount = 0, 500);
-      if (event.target.dataset.clickCount >= 3) {
-        const name = event.target.textContent;
-        if (event.target.classList.contains('male')) maleList = maleList.filter(n => n !== name);
-        if (event.target.classList.contains('female')) femaleList = femaleList.filter(n => n !== name);
-        renderLists();
       }
     }
 

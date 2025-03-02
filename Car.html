@@ -65,6 +65,15 @@
       align-items: center;
       background-color: #e0e0e0;
     }
+    /* 新增刪除區樣式 */
+    .trash {
+      border: 2px dashed red;
+      padding: 20px;
+      margin: 20px auto;
+      width: 300px;
+      font-size: 16px;
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -95,6 +104,11 @@
 
   <div class="container" id="vehicle-container"></div>
 
+  <!-- 新增刪除區 -->
+  <div id="trash" class="trash" ondragover="event.preventDefault()" ondrop="dropTrash(event)">
+    拖曳至此處刪除
+  </div>
+
   <script>
     const drivers = ["曾兄", "黃講師", "陳講師", "蘇講師", "莊講師", "黃講師"];
     let maleList = [];
@@ -104,10 +118,8 @@
       const nameInput = document.getElementById('nameInput');
       const nameValue = name || nameInput.value.trim();
       if (!nameValue) return;
-
       if (gender === 'male' && !maleList.includes(nameValue)) maleList.push(nameValue);
       if (gender === 'female' && !femaleList.includes(nameValue)) femaleList.push(nameValue);
-
       renderLists();
       if (!name) nameInput.value = '';
     }
@@ -117,47 +129,23 @@
       const femaleContainer = document.getElementById('femaleList');
       maleContainer.innerHTML = '<h4>乾道</h4>';
       femaleContainer.innerHTML = '<h4>坤道</h4>';
-
       maleList.forEach(name => createNameElement(name, 'male', maleContainer));
       femaleList.forEach(name => createNameElement(name, 'female', femaleContainer));
     }
 
-    // 統一點擊事件：使用 e.detail 判斷雙擊與三擊
-    function handleNameClick(e) {
-      const element = e.target;
-      // 雙擊：設定延時返回
-      if(e.detail === 2) {
-        element.doubleClickTimer = setTimeout(() => {
-          // 若當前元素不在列表中，且底層資料仍包含該姓名，再返回至對應列表
-          if (!element.parentElement.classList.contains('list')) {
-            const name = element.textContent;
-            if ((element.classList.contains('male') && maleList.includes(name)) ||
-                (element.classList.contains('female') && femaleList.includes(name))) {
-              const listId = element.classList.contains('male') ? 'maleList' : 'femaleList';
-              document.getElementById(listId).appendChild(element);
-            }
+    // 使用原生 dblclick 事件來返回元素至對應清單
+    function setupReturn(element) {
+      element.ondblclick = function() {
+        // 如果該元素不在清單中，則返回對應清單
+        if (!this.parentElement.classList.contains('list')) {
+          const gender = this.classList.contains('male') ? 'male' : 'female';
+          const listId = gender === 'male' ? 'maleList' : 'femaleList';
+          const listContainer = document.getElementById(listId);
+          if (!listContainer.querySelector(`#${this.id}`)) {
+            listContainer.appendChild(this);
           }
-          element.doubleClickTimer = null;
-        }, 250);
+        }
       }
-      // 三擊：先清除延時，再從資料與畫面中移除
-      else if(e.detail === 3) {
-        if (element.doubleClickTimer) {
-          clearTimeout(element.doubleClickTimer);
-          element.doubleClickTimer = null;
-        }
-        const name = element.textContent;
-        if (element.classList.contains('male')) {
-          maleList = maleList.filter(n => n !== name);
-        } else if (element.classList.contains('female')) {
-          femaleList = femaleList.filter(n => n !== name);
-        }
-        if (element.parentElement) {
-          element.parentElement.removeChild(element);
-        }
-        renderLists();
-      }
-      // 單擊不作處理
     }
 
     function createNameElement(name, gender, container) {
@@ -167,8 +155,12 @@
       nameElement.draggable = true;
       nameElement.id = `name-${gender}-${name}`;
       nameElement.ondragstart = dragStart;
-      nameElement.addEventListener('click', handleNameClick);
-      if (!container.contains(nameElement)) container.appendChild(nameElement);
+      // 綁定 dblclick 事件處理返回
+      setupReturn(nameElement);
+      // 避免重複加入
+      if (!container.querySelector(`#${nameElement.id}`)) {
+        container.appendChild(nameElement);
+      }
     }
 
     function importExcel(event) {
@@ -179,10 +171,8 @@
         const workbook = XLSX.read(data, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-
         if (rows.length > 0) maleList = rows[0].filter(name => name.trim() !== "");
         if (rows.length > 1) femaleList = rows[1].filter(name => name.trim() !== "");
-
         renderLists();
       };
       reader.readAsArrayBuffer(file);
@@ -207,8 +197,28 @@
       const id = event.dataTransfer.getData('text/plain');
       const element = document.getElementById(id);
       const targetList = document.getElementById(listId);
-      if (element && targetList !== element.parentElement && !targetList.contains(element)) {
+      if (element && targetList !== element.parentElement && !targetList.querySelector(`#${element.id}`)) {
         targetList.appendChild(element);
+      }
+    }
+
+    // 當姓名拖曳到刪除區時，執行刪除動作
+    function dropTrash(event) {
+      event.preventDefault();
+      const id = event.dataTransfer.getData('text/plain');
+      const element = document.getElementById(id);
+      if (element) {
+        const name = element.textContent;
+        if (element.classList.contains('male')) {
+          maleList = maleList.filter(n => n !== name);
+        } else if (element.classList.contains('female')) {
+          femaleList = femaleList.filter(n => n !== name);
+        }
+        // 從 DOM 中移除元素後，更新清單
+        if (element.parentElement) {
+          element.parentElement.removeChild(element);
+        }
+        renderLists();
       }
     }
 
@@ -216,7 +226,6 @@
       const container = document.getElementById('vehicle-container');
       container.innerHTML = '';
       const count = parseInt(document.getElementById('vehicleCount').value);
-
       for (let i = 1; i <= count; i++) {
         const vehicleDiv = document.createElement('div');
         vehicleDiv.className = 'vehicle';

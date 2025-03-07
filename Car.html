@@ -65,7 +65,7 @@
       align-items: center;
       background-color: #e0e0e0;
     }
-    /* 新增刪除區樣式 */
+    /* 刪除區樣式 */
     .trash {
       border: 2px dashed red;
       padding: 20px;
@@ -104,16 +104,18 @@
 
   <div class="container" id="vehicle-container"></div>
 
-  <!-- 新增刪除區 -->
+  <!-- 刪除區：拖曳到此處永久刪除 -->
   <div id="trash" class="trash" ondragover="event.preventDefault()" ondrop="dropTrash(event)">
-    拖曳至此處刪除
+    拖曳至此處永久刪除
   </div>
 
   <script>
     const drivers = ["曾兄", "黃講師", "陳講師", "蘇講師", "莊講師", "黃講師"];
+    // 底層資料：若姓名從名單拖至座位或刪除區，則從陣列移除
     let maleList = [];
     let femaleList = [];
 
+    // 新增姓名：若底層資料中尚無該姓名，則加入後重新渲染
     function addName(gender, name = null) {
       const nameInput = document.getElementById('nameInput');
       const nameValue = name || nameInput.value.trim();
@@ -124,6 +126,7 @@
       if (!name) nameInput.value = '';
     }
 
+    // 重新渲染名單，根據底層資料生成乾道/坤道姓名元素
     function renderLists() {
       const maleContainer = document.getElementById('maleList');
       const femaleContainer = document.getElementById('femaleList');
@@ -133,12 +136,15 @@
       femaleList.forEach(name => createNameElement(name, 'female', femaleContainer));
     }
 
-    // 使用原生 dblclick 事件來返回元素至對應清單
+    // 綁定 dblclick 返回事件：只有當底層資料中仍包含該姓名時，才允許返回名單
     function setupReturn(element) {
       element.ondblclick = function() {
-        // 如果該元素不在清單中，則返回對應清單
+        const gender = this.classList.contains('male') ? 'male' : 'female';
+        // 若底層資料中已不含此姓名，則不返回
+        if (gender === 'male' && !maleList.includes(this.textContent)) return;
+        if (gender === 'female' && !femaleList.includes(this.textContent)) return;
+        // 若目前元素不在名單中，並且名單中尚無重複，則返回至對應名單
         if (!this.parentElement.classList.contains('list')) {
-          const gender = this.classList.contains('male') ? 'male' : 'female';
           const listId = gender === 'male' ? 'maleList' : 'femaleList';
           const listContainer = document.getElementById(listId);
           if (!listContainer.querySelector(`#${this.id}`)) {
@@ -148,6 +154,7 @@
       }
     }
 
+    // 建立姓名元素，並加入對應容器
     function createNameElement(name, gender, container) {
       const nameElement = document.createElement('div');
       nameElement.className = `draggable ${gender}`;
@@ -155,14 +162,13 @@
       nameElement.draggable = true;
       nameElement.id = `name-${gender}-${name}`;
       nameElement.ondragstart = dragStart;
-      // 綁定 dblclick 事件處理返回
       setupReturn(nameElement);
-      // 避免重複加入
       if (!container.querySelector(`#${nameElement.id}`)) {
         container.appendChild(nameElement);
       }
     }
 
+    // 匯入 Excel 後更新底層資料，重新渲染名單
     function importExcel(event) {
       const file = event.target.files[0];
       const reader = new FileReader();
@@ -178,31 +184,47 @@
       reader.readAsArrayBuffer(file);
     }
 
+    // 開始拖曳時，記錄被拖曳元素的 id
     function dragStart(event) {
       event.dataTransfer.setData('text/plain', event.target.id);
     }
 
+    // dropHandler：拖曳到座位或其他非名單區時執行
     function dropHandler(event) {
       event.preventDefault();
       const id = event.dataTransfer.getData('text/plain');
       const element = document.getElementById(id);
       if (element && event.target !== element.parentElement && !event.target.contains(element)) {
+        // 若拖曳到座位，則從底層資料中移除該姓名
+        if (event.target.classList.contains('seat')) {
+          const gender = element.classList.contains('male') ? 'male' : 'female';
+          if (gender === 'male') {
+            maleList = maleList.filter(n => n !== element.textContent);
+          } else {
+            femaleList = femaleList.filter(n => n !== element.textContent);
+          }
+        }
         event.target.innerHTML = '';
         event.target.appendChild(element);
       }
     }
 
+    // dropReturn：拖回至名單區時（返回）執行，僅在底層資料中仍存在該姓名時回傳
     function dropReturn(event, listId) {
       event.preventDefault();
       const id = event.dataTransfer.getData('text/plain');
       const element = document.getElementById(id);
       const targetList = document.getElementById(listId);
       if (element && targetList !== element.parentElement && !targetList.querySelector(`#${element.id}`)) {
+        // 若姓名已從底層資料中移除，則不返回名單
+        const gender = element.classList.contains('male') ? 'male' : 'female';
+        if (gender === 'male' && !maleList.includes(element.textContent)) return;
+        if (gender === 'female' && !femaleList.includes(element.textContent)) return;
         targetList.appendChild(element);
       }
     }
 
-    // 當姓名拖曳到刪除區時，執行刪除動作
+    // dropTrash：拖曳到刪除區時，從底層資料及 DOM 中移除該姓名，並重新渲染名單
     function dropTrash(event) {
       event.preventDefault();
       const id = event.dataTransfer.getData('text/plain');
@@ -214,7 +236,6 @@
         } else if (element.classList.contains('female')) {
           femaleList = femaleList.filter(n => n !== name);
         }
-        // 從 DOM 中移除元素後，更新清單
         if (element.parentElement) {
           element.parentElement.removeChild(element);
         }
@@ -222,6 +243,7 @@
       }
     }
 
+    // 建立車輛與座位（此部分與姓名管理功能無直接關聯）
     function createVehicles() {
       const container = document.getElementById('vehicle-container');
       container.innerHTML = '';
